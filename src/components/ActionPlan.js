@@ -1,6 +1,37 @@
 'use client';
+import { useState } from 'react';
+
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <button className="btn-copy-code" onClick={handleCopy}>
+      {copied ? '✓ Copied!' : '📋 Copy Code'}
+    </button>
+  );
+}
 
 export default function ActionPlan({ issues }) {
+  const [expandedSnippets, setExpandedSnippets] = useState({});
+
   if (!issues.length) {
     return (
       <div className="action-plan">
@@ -11,6 +42,10 @@ export default function ActionPlan({ issues }) {
       </div>
     );
   }
+
+  const toggleSnippet = (i) => {
+    setExpandedSnippets((prev) => ({ ...prev, [i]: !prev[i] }));
+  };
 
   return (
     <div className="action-plan">
@@ -32,6 +67,25 @@ export default function ActionPlan({ issues }) {
             <div className="action-fix">
               <strong>💡 Fix: </strong>{issue.fix}
             </div>
+            {issue.codeSnippet && (
+              <div className="code-snippet-section">
+                <button
+                  className="btn-toggle-snippet"
+                  onClick={() => toggleSnippet(i)}
+                >
+                  {expandedSnippets[i] ? '▼' : '▶'} {issue.codeSnippet.label}
+                </button>
+                {expandedSnippets[i] && (
+                  <div className="code-snippet-container">
+                    <div className="code-snippet-header">
+                      <span className="code-lang-badge">{issue.codeSnippet.language.toUpperCase()}</span>
+                      <CopyButton text={issue.codeSnippet.code} />
+                    </div>
+                    <pre className="code-snippet-block"><code>{issue.codeSnippet.code}</code></pre>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="action-tags">
               <span className="tag">Impact: +{issue.impact}pts</span>
               <span className="tag">Effort: {issue.effort}</span>

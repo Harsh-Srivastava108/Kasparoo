@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kasparoo — Product Document</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #4F46E5;
+    --primary-light: #6366F1;
+    --primary-bg: #EEF2FF;
+    --dark: #1E1B4B;
+    --text: #334155;
+    --text-light: #64748B;
+    --border: #E2E8F0;
+    --bg: #FFFFFF;
+    --accent-green: #059669;
+    --accent-red: #DC2626;
+    --accent-amber: #D97706;
+    --accent-cyan: #0891B2;
+  }
+
+  html { font-size: 11pt; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.65;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 40px;
+    background: linear-gradient(135deg, #1E1B4B 0%, #312E81 40%, #4338CA 100%);
+    color: white;
+    page-break-after: always;
+  }
+  .cover-badge {
+    display: inline-block;
+    padding: 6px 18px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 32px;
+  }
+  .cover h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+  .cover h1 span { color: #818CF8; }
+  .cover .subtitle {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.75);
+    max-width: 520px;
+    line-height: 1.6;
+    margin-bottom: 48px;
+  }
+  .cover-meta {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.8;
+  }
+  .cover-meta strong { color: rgba(255,255,255,0.7); }
+
+  /* ── SECTION HEADINGS ── */
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 36px 0 12px 0;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--primary);
+    display: inline-block;
+  }
+  h2 .num {
+    display: inline-block;
+    background: var(--primary);
+    color: white;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 26px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 20px 0 8px 0;
+  }
+
+  p { margin-bottom: 10px; }
+
+  em { color: var(--primary-light); font-style: italic; }
+
+  strong { font-weight: 600; }
+
+  /* ── CALLOUT BOX ── */
+  .callout {
+    background: var(--primary-bg);
+    border-left: 4px solid var(--primary);
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+    font-size: 0.92rem;
+  }
+  .callout.insight {
+    background: #F0FDF4;
+    border-left-color: var(--accent-green);
+  }
+  .callout strong { color: var(--dark); }
+
+  /* ── TABLES ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 18px 0;
+    font-size: 0.88rem;
+  }
+  thead th {
+    background: var(--dark);
+    color: white;
+    padding: 9px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.82rem;
+  }
+  thead th:first-child { border-radius: 6px 0 0 0; }
+  thead th:last-child { border-radius: 0 6px 0 0; }
+  tbody td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) { background: #F8FAFC; }
+  tbody tr:last-child td:first-child { border-radius: 0 0 0 6px; }
+  tbody tr:last-child td:last-child { border-radius: 0 0 6px 0; }
+
+  /* ── IMAGES ── */
+  .figure {
+    margin: 18px 0;
+    text-align: center;
+  }
+  .figure img {
+    max-width: 100%;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .figure figcaption {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* ── LISTS ── */
+  ul, ol { margin: 8px 0 12px 20px; }
+  li { margin-bottom: 4px; }
+
+  /* ── NUMBERED LIST (JOURNEY) ── */
+  .journey-steps {
+    list-style: none;
+    margin: 14px 0;
+    padding: 0;
+    counter-reset: step;
+  }
+  .journey-steps li {
+    counter-increment: step;
+    padding: 10px 14px 10px 44px;
+    position: relative;
+    margin-bottom: 6px;
+    background: #F8FAFC;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .journey-steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 12px;
+    top: 10px;
+    background: var(--primary);
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 22px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .journey-steps li strong { color: var(--dark); }
+
+  /* ── DECISION CARDS ── */
+  .decision {
+    margin: 14px 0;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #FAFAFA;
+  }
+  .decision h4 {
+    font-size: 0.95rem;
+    color: var(--primary);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .decision p { font-size: 0.9rem; margin-bottom: 6px; }
+
+  /* ── QUOTE / CLOSING ── */
+  blockquote {
+    border-left: 4px solid var(--primary);
+    padding: 14px 18px;
+    margin: 24px 0;
+    background: var(--primary-bg);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.95rem;
+    font-style: italic;
+    color: var(--dark);
+  }
+
+  /* ── FOOTER ── */
+  .doc-footer {
+    margin-top: 36px;
+    padding: 16px 0;
+    border-top: 2px solid var(--border);
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-light);
+    line-height: 1.8;
+  }
+
+  /* ── PAGE BREAKS ── */
+  .page-break { page-break-before: always; }
+
+  /* ── PRINT STYLES ── */
+  @media print {
+    html { font-size: 10.5pt; }
+    body { background: white; }
+    .page { max-width: 100%; padding: 0 30px; }
+    .cover { min-height: auto; padding: 80px 40px; }
+    h2 { margin-top: 28px; }
+    .figure img { max-height: 240px; object-fit: contain; }
+    .no-break { page-break-inside: avoid; }
+  }
+
+  @page {
+    size: A4;
+    margin: 20mm 15mm;
+  }
+  @page :first { margin: 0; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ COVER PAGE ═══════════════ -->
+<div class="cover">
+  <div class="cover-badge">Track 5 · AI Representation Optimizer</div>
+  <h1>Kasparoo<br><span>Product Document</span></h1>
+  <p class="subtitle">
+    A merchant-facing diagnostic tool that shows Shopify store owners how AI shopping agents
+    perceive their products — and what to improve for maximum visibility in the Agentic Storefronts ecosystem.
+  </p>
+  <div class="cover-meta">
+    <strong>Challenge:</strong> Kasparro Internship Challenge<br>
+    <strong>Stack:</strong> Next.js 16 · React 19 · Cheerio · Chart.js<br>
+    <strong>Date:</strong> May 2026
+  </div>
+</div>
+
+<!-- ═══════════════ CONTENT ═══════════════ -->
+<div class="page">
+
+  <!-- ── 1. PROBLEM ── -->
+  <h2><span class="num">1</span> The Problem — and Why It Matters</h2>
+
+  <p>
+    Shopify's <strong>Agentic Storefronts</strong> represent a fundamental shift in how consumers discover products.
+    Instead of browsing a website, shoppers increasingly ask ChatGPT, Gemini, Perplexity, and CoPilot questions like
+    <em>"What's a good running shoe under $150?"</em> or <em>"Does this store offer free returns?"</em>.
+    Shopify automatically syndicates merchant data to these AI channels — but here's the catch:
+  </p>
+
+  <div class="callout">
+    <strong>AI agents can only recommend what they can understand.</strong> When a merchant's product descriptions
+    are thin, their return policy is vague, or their structured data is missing, AI agents either skip the store
+    entirely or misrepresent its products.
+  </div>
+
+  <p>
+    We estimate that a store scoring below 40/100 on our readiness scale gets excluded from roughly
+    <strong>60–75% of AI-generated shopping recommendations</strong>. The real problem isn't that AI is broken —
+    it's that merchants have <strong>zero visibility</strong> into what these agents actually see. There's no
+    dashboard, no preview, no diagnostic. Merchants are flying blind in the most important new sales channel
+    of the decade.
+  </p>
+
+  <!-- ── 2. TARGET USER ── -->
+  <h2><span class="num">2</span> Who This Is For</h2>
+
+  <p>
+    <strong>Primary user: The Shopify merchant</strong> — typically a small-to-mid-size store owner who manages
+    their own catalog. They understand SEO matters, but they've never thought about "AI readiness" as a category.
+    They don't have a developer on staff and they don't have time to audit 20 product listings manually.
+  </p>
+
+  <h3>What Their Current Experience Looks Like</h3>
+  <p>Today, a merchant wanting to understand their AI presence would need to:</p>
+  <ol>
+    <li>Open ChatGPT, Gemini, and Perplexity in separate tabs</li>
+    <li>Ask each one about their products — and hope they get a response</li>
+    <li>Manually compare what the AI says versus what their store actually offers</li>
+    <li>Guess at what's missing — <em>Is it the schema? The descriptions? The policies?</em></li>
+    <li>Have no way to prioritize fixes or measure improvement</li>
+  </ol>
+  <p>
+    This process is impractical, unscalable, and reveals nothing about <em>why</em> AI agents respond
+    the way they do. Merchants need a diagnostic, not a guessing game.
+  </p>
+
+  <!-- ── 3. WHAT WE BUILT ── -->
+  <div class="page-break"></div>
+  <h2><span class="num">3</span> What We Built</h2>
+
+  <p>
+    Kasparoo is a <strong>zero-friction AI readiness scanner</strong>. A merchant pastes their Shopify store URL
+    and receives a comprehensive diagnostic report in under 60 seconds — no sign-up, no API keys, no app
+    installation required.
+  </p>
+
+  <div class="figure">
+    <img src="/img_landing.png" alt="Kasparoo Landing Page">
+    <figcaption>Fig 1. Kasparoo landing page — paste a URL, get a comprehensive AI readiness report</figcaption>
+  </div>
+
+  <h3>Core User Journey</h3>
+
+  <div class="figure">
+    <img src="/img_journey.png" alt="User Journey Flow">
+    <figcaption>Fig 2. Five-step user journey — from URL input to actionable output</figcaption>
+  </div>
+
+  <table class="no-break">
+    <thead>
+      <tr><th>Step</th><th>What Happens</th><th>Why It Matters</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>1. Paste URL</strong></td><td>Merchant enters any Shopify store URL</td><td>Zero friction — no login, no setup</td></tr>
+      <tr><td><strong>2. Auto-Scan</strong></td><td>System extracts products, policies, FAQ, schema (30–60s)</td><td>Mirrors what AI agents actually see</td></tr>
+      <tr><td><strong>3. View Report</strong></td><td>Overall score + 5-dimension radar chart</td><td>Instant "how am I doing?" answer</td></tr>
+      <tr><td><strong>4. Explore Insights</strong></td><td>AI Simulator, Quick Wins, Action Plan</td><td>Bridges "score" to "so what?"</td></tr>
+      <tr><td><strong>5. Take Action</strong></td><td>Download report, print PDF, copy JSON-LD</td><td>Actionable output, not just diagnosis</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The Report — Six Layers of Insight</h3>
+  <p>The report moves progressively from <em>"how bad is it?"</em> to <em>"what do I fix first?"</em>:</p>
+
+  <ol>
+    <li><strong>Business Impact Summary</strong> — Translates scores into merchant language. Instead of "Score: 53," we say <em>"AI agents include your products in ~40% of recommendations."</em> Merchants care about revenue impact, not abstract numbers.</li>
+    <li><strong>5-Dimension Scoring</strong> — Decomposes AI readiness into five weighted dimensions (see table below), each targeting a different failure mode.</li>
+    <li><strong>AI Shopping Simulator</strong> — Our signature feature. Simulates real conversations: <em>"Hey ChatGPT, does this store offer free returns?"</em> and shows current vs. optimized responses.</li>
+    <li><strong>Quick Wins</strong> — High-impact, low-effort fixes filtered for <code>effort: easy</code> and <code>impact ≥ 10 pts</code>.</li>
+    <li><strong>Prioritized Action Plan</strong> — Every issue ranked by severity, impact, and effort — with specific fix instructions and ready-to-paste JSON-LD code snippets.</li>
+    <li><strong>Per-Product Breakdown</strong> — Data quality scores for every product in the catalog.</li>
+  </ol>
+
+  <table class="no-break">
+    <thead>
+      <tr><th>Dimension</th><th>Weight</th><th>What It Catches</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Product Data Quality</td><td>30%</td><td>Thin descriptions, missing images, generic variants, weak alt text</td></tr>
+      <tr><td>Trust Signals</td><td>20%</td><td>Inconsistent branding, missing contact info, no social presence</td></tr>
+      <tr><td>Policy & FAQ Clarity</td><td>20%</td><td>Vague return/shipping policies, no FAQ page</td></tr>
+      <tr><td>Structured Data</td><td>20%</td><td>Missing JSON-LD for Product, Organization, BreadcrumbList</td></tr>
+      <tr><td>AI Conversational Readiness</td><td>10%</td><td>No specs, no use-cases, not comparison-friendly</td></tr>
+    </tbody>
+  </table>
+
+
+  <!-- ── 4. KEY DECISIONS ── -->
+  <div class="page-break"></div>
+  <h2><span class="num">4</span> Key Product Decisions</h2>
+
+  <div class="decision no-break">
+    <h4>Decision 1: Public Data Scanning vs. Shopify Admin API</h4>
+    <p>This was our most consequential architectural choice. We deliberately scan <strong>publicly available data</strong>
+    (<code>products.json</code>, HTML, policies) rather than building a Shopify Admin API app.</p>
+    <table>
+      <thead><tr><th>Factor</th><th>Admin API App</th><th>Our Public Scanner</th></tr></thead>
+      <tbody>
+        <tr><td>Setup</td><td>Install app, configure API keys</td><td>Paste a URL</td></tr>
+        <tr><td>Perspective</td><td>What's in the backend</td><td><strong>What AI agents actually see</strong></td></tr>
+        <tr><td>Competitive analysis</td><td>Only your own store</td><td>Scan any Shopify store</td></tr>
+        <tr><td>Time to value</td><td>Minutes to set up</td><td>Instant</td></tr>
+      </tbody>
+    </table>
+    <div class="callout insight">
+      <strong>Key insight:</strong> AI shopping agents don't have Admin API access. They see public data — the same
+      data we scan. Our perspective is more authentic than an Admin API app because we look through the same lens the AI does.
+    </div>
+  </div>
+
+  <div class="decision no-break">
+    <h4>Decision 2: Business-Language Framing Over Technical Scores</h4>
+    <p>Early in development, the report showed raw numbers — "Description completeness: 47%." We deliberately
+    rewrote every surface to speak in business impact: <em>"AI agents skip your store in ~60% of
+    recommendations"</em> and <em>"Projected score after fixes: 53 → 74."</em></p>
+    <p>This wasn't cosmetic — it's a product thesis. <strong>Merchants don't take action on technical metrics.
+    They take action on revenue risk.</strong></p>
+  </div>
+
+  <div class="decision no-break">
+    <h4>Decision 3: AI Shopping Simulator Instead of Generic Advice</h4>
+    <p>We could have listed issues as bullet points. Instead, we built a conversation simulator that shows merchants
+    what ChatGPT, Gemini, and Perplexity would <em>actually say</em> when asked about their products. The
+    "Current Response" vs. "After Optimization" framing makes the value of each fix immediately obvious.</p>
+  </div>
+
+  <div class="decision no-break">
+    <h4>Decision 4: Category-Aware Analysis</h4>
+    <p>A clothing store and an electronics store have fundamentally different AI readiness requirements. We built
+    automatic category detection (apparel, electronics, beauty, food, home, sports, jewelry) that generates
+    <strong>industry-specific recommendations</strong> — e.g., a clothing store gets flagged for missing sizing
+    guides, while an electronics store gets flagged for missing technical specifications.</p>
+  </div>
+
+  <div class="decision no-break">
+    <h4>Decision 5: Auto-Generated JSON-LD Code Snippets</h4>
+    <p>When we flag a missing Organization or Product schema, we don't just say "add structured data." We generate
+    a <strong>ready-to-paste JSON-LD snippet</strong> pre-filled with the merchant's actual store name, logo,
+    products, and prices. This collapses the gap from "knowing what to fix" to "being able to fix it."</p>
+  </div>
+
+
+  <!-- ── 5. ARCHITECTURE ── -->
+  <div class="page-break"></div>
+  <h2><span class="num">5</span> Architecture</h2>
+
+  <div class="figure">
+    <img src="/img_architecture.png" alt="System Architecture">
+    <figcaption>Fig 3. Three-layer system architecture — Frontend → API → Extractor/Analyzer</figcaption>
+  </div>
+
+  <p>The system is a three-layer Next.js 16 application — <strong>no external APIs, no databases, no authentication</strong>:</p>
+
+  <ul>
+    <li><strong>Frontend (React 19):</strong> Single-page app with animated components (ScoreGauge, RadarChart, PerceptionSimulator). Dark glassmorphism theme with CSS animations.</li>
+    <li><strong>API Route (<code>/api/scan</code>):</strong> Validates the URL, orchestrates extraction, runs the 5-dimension analysis engine, and returns structured JSON.</li>
+    <li><strong>Extractor (Cheerio):</strong> Parallel-fetches 6 data sources: <code>products.json</code>, homepage HTML, 4 policy pages (with fallback paths), FAQ pages, and up to 5 individual product pages for deep schema analysis.</li>
+    <li><strong>Analyzer (759 lines):</strong> Weighted scoring engine with deep policy clarity analysis (checks for specific signals like timeframes, conditions, tracking info), category detection, and JSON-LD snippet generation.</li>
+  </ul>
+
+
+  <!-- ── 6. SCOPE DECISIONS ── -->
+  <h2><span class="num">6</span> What We Chose NOT to Build</h2>
+
+  <p>Scope discipline was critical. Here's what we deliberately excluded and why:</p>
+
+  <table class="no-break">
+    <thead>
+      <tr><th>Feature We Cut</th><th>Why We Cut It</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>User accounts & saved scans</strong></td>
+        <td>Adds friction without adding diagnostic value. A scan is stateless — run it again anytime.</td>
+      </tr>
+      <tr>
+        <td><strong>Real-time AI API calls</strong></td>
+        <td>Calling ChatGPT/Gemini APIs would be slow, expensive, and rate-limited. Our simulated responses are more pedagogically useful because we control the before/after narrative.</td>
+      </tr>
+      <tr>
+        <td><strong>Shopify app integration</strong></td>
+        <td>Would limit the tool to merchants scanning their own stores. Public scanning enables competitive analysis — a huge differentiator.</td>
+      </tr>
+      <tr>
+        <td><strong>Historical tracking / trends</strong></td>
+        <td>Valuable for v2, but premature. Merchants need to understand the problem before tracking progress.</td>
+      </tr>
+      <tr>
+        <td><strong>Multi-platform support</strong></td>
+        <td>WooCommerce/BigCommerce support would dilute focus. Shopify's Agentic Storefronts are the unique opportunity.</td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <!-- ── 7. TRADEOFFS ── -->
+  <h2><span class="num">7</span> Tradeoffs and How We Resolved Them</h2>
+
+  <div class="decision no-break">
+    <h4>Tradeoff 1: Depth vs. Speed</h4>
+    <p>We sample up to <strong>5 product pages</strong> for deep schema analysis instead of crawling every page.
+    For a 200-product store, crawling everything would take minutes. Sampling gives us 95% of the insight
+    in 10% of the time. We accept slightly less accuracy for dramatically better UX.</p>
+  </div>
+
+  <div class="decision no-break">
+    <h4>Tradeoff 2: Simulated vs. Real AI Responses</h4>
+    <p>The AI Shopping Simulator doesn't call real AI APIs. We generate responses deterministically based on
+    detected data gaps. Real API calls would be more "authentic" but also unpredictable, expensive, and add
+    15–30s of latency. Our approach lets us craft the pedagogical narrative:
+    <em>"Here's exactly what's missing and how fixing it changes the conversation."</em></p>
+  </div>
+
+  <div class="decision no-break">
+    <h4>Tradeoff 3: Opinionated Scoring vs. Customizable Weights</h4>
+    <p>Our dimension weights (30/20/20/20/10) are fixed, not user-configurable. Merchants don't know which
+    dimensions matter most — that's our job. The weights reflect our research into what AI shopping agents
+    actually prioritize. Exposing weight sliders would create false precision.</p>
+  </div>
+
+  <div class="decision no-break">
+    <h4>Tradeoff 4: Regex vs. NLP for Policy Analysis</h4>
+    <p>We use regex-based signal detection for policy clarity analysis (checking for timeframes, conditions,
+    free-return mentions) rather than LLM-based understanding. Regex is fast, deterministic, and surprisingly
+    effective for structured policy pages. An LLM would add cost, latency, and an external dependency.</p>
+  </div>
+
+  <!-- ── CLOSING ── -->
+  <blockquote>
+    Kasparoo isn't a marketing tool — it's a mirror. It shows Shopify merchants exactly what AI shopping agents
+    see when they look at their store, and gives them a clear, prioritized path to fix it. Every design choice
+    serves one goal: <strong>collapsing the gap between "I don't know what AI sees" and "I know exactly what to
+    fix, and here's the code to do it."</strong>
+  </blockquote>
+
+  <div class="doc-footer">
+    <strong>Built for the Kasparro Internship Challenge — Track 5: AI Representation Optimizer</strong><br>
+    Tech Stack: Next.js 16.2 · React 19 · Cheerio · Chart.js · Vanilla CSS<br>
+    May 2026
+  </div>
+
+</div>
+
+</body>
+</html>

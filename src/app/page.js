@@ -6,6 +6,9 @@ import DimensionCard from '@/components/DimensionCard';
 import ActionPlan from '@/components/ActionPlan';
 import PerceptionSimulator from '@/components/PerceptionSimulator';
 import ProductTable from '@/components/ProductTable';
+import ImpactSummary from '@/components/ImpactSummary';
+import QuickWins from '@/components/QuickWins';
+import ExportButton from '@/components/ExportButton';
 
 const SCAN_STEPS = [
   'Validating Shopify store...',
@@ -79,13 +82,13 @@ export default function Home() {
             Kasparro AI Readiness Scanner
           </div>
           <h1 className="animate-in delay-1">
-            How do AI agents<br />
-            <span className="gradient-text">see your store?</span>
+            Will ChatGPT & Gemini<br />
+            <span className="gradient-text">recommend your products?</span>
           </h1>
           <p className="animate-in delay-2">
-            Paste your Shopify store URL to get a comprehensive AI readiness audit.
-            Discover gaps in your product data, policies, and structured markup that
-            cause AI shopping agents to skip or misrepresent your store.
+            Shopify&apos;s Agentic Storefronts syndicate your product data to ChatGPT, Gemini,
+            Perplexity, and CoPilot. Paste your store URL to discover what these AI agents
+            see — and what they&apos;re missing.
           </p>
           <div className="scanner-container animate-in delay-3">
             <form onSubmit={handleScan}>
@@ -112,8 +115,8 @@ export default function Home() {
             </div>
             <div className="feature-card">
               <div className="feature-icon">🤖</div>
-              <h3>AI Perception Simulator</h3>
-              <p>See exactly how AI agents currently describe your store vs. how you want to be seen.</p>
+              <h3>AI Chat Simulator</h3>
+              <p>See how ChatGPT, Gemini & Perplexity respond when shoppers ask about your products.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">🎯</div>
@@ -172,10 +175,26 @@ export default function Home() {
     <main className="container">
       {/* Header */}
       <div className="results-header animate-in">
+        <div className="agentic-badge">
+          <span>🔗</span> Shopify Agentic Storefronts Readiness Report
+        </div>
         <h2>AI Readiness Report</h2>
         <p className="store-url">{results.storeName} — {results.productCount} products, {results.collectionCount} collections</p>
-        <button className="btn-new-scan" onClick={handleNewScan}>← Scan Another Store</button>
+        {results.category && results.category.confidence > 0 && (
+          <p className="category-badge">
+            📂 Detected: <strong>{results.category.primary}</strong>
+            {results.category.secondary && <span> · {results.category.secondary}</span>}
+          </p>
+        )}
+        <p className="agentic-subtitle">How ChatGPT, Gemini, Perplexity & CoPilot perceive your store</p>
+        <div className="results-header-actions">
+          <button className="btn-new-scan" onClick={handleNewScan}>← Scan Another Store</button>
+          <ExportButton results={results} />
+        </div>
       </div>
+
+      {/* Impact Summary */}
+      <ImpactSummary results={results} />
 
       {/* Score Overview */}
       <div className="score-overview animate-in delay-1">
@@ -198,8 +217,11 @@ export default function Home() {
         ))}
       </div>
 
-      {/* AI Perception Simulator */}
-      <PerceptionSimulator perception={results.perception} />
+      {/* AI Chat Simulator */}
+      <PerceptionSimulator perception={results.perception} storeName={results.storeName} />
+
+      {/* Quick Wins */}
+      <QuickWins issues={results.issues} />
 
       {/* Prioritized Action Plan */}
       <ActionPlan issues={results.issues} />
@@ -208,7 +230,7 @@ export default function Home() {
       <ProductTable products={results.productSummary} />
 
       <footer className="footer">
-        Scanned at {new Date(results.scannedAt).toLocaleString()} — Built for the <a href="https://kasparro.com" target="_blank" rel="noopener">Kasparro</a> Internship Challenge
+        Scanned at {new Date(results.scannedAt).toLocaleString()} — Built for the <a href="https://kasparro.com" target="_blank" rel="noopener">Kasparro</a> Internship Challenge — Track 5
       </footer>
     </main>
   );

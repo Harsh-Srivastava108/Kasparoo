@@ -5,10 +5,26 @@ function clamp(val, min = 0, max = 100) {
 }
 
 // ─── 1. Product Data Quality (30%) ───
-export function analyzeProductQuality(products) {
+export function analyzeProductQuality(products, productPages = []) {
   if (!products.length) return { score: 0, details: {}, issues: [] };
   const issues = [];
   let descScore = 0, imgScore = 0, variantScore = 0, priceScore = 0, tagScore = 0;
+
+  // Score image alt-texts from sampled product pages
+  let altScore = 0;
+  let totalAltImages = 0;
+  productPages.forEach((pp) => {
+    const alts = pp.imageAlts || [];
+    alts.forEach((img) => {
+      totalAltImages++;
+      const alt = (img.alt || '').trim().toLowerCase();
+      if (!alt || alt.length < 3) altScore += 0;
+      else if (/^(image|photo|picture|img|product|untitled)$/i.test(alt)) altScore += 20;
+      else if (alt.length > 10) altScore += 100;
+      else altScore += 50;
+    });
+  });
+  const imageAltQuality = totalAltImages > 0 ? clamp(altScore / totalAltImages) : 50;
 
   products.forEach((p) => {
     // Description completeness
@@ -49,6 +65,7 @@ export function analyzeProductQuality(products) {
   const details = {
     descriptionCompleteness: clamp(descScore / n),
     imageCoverage: clamp(imgScore / n),
+    imageAltQuality,
     variantClarity: clamp(variantScore / n),
     priceTransparency: clamp(priceScore / n),
     tagStructure: clamp(tagScore / n),
@@ -79,10 +96,17 @@ export function analyzeProductQuality(products) {
     fix: 'Add at least 3 relevant tags per product (e.g., category, use-case, material, audience).',
     impact: 10, effort: 'easy',
   });
+  if (details.imageAltQuality < 40) issues.push({
+    severity: 'high', area: 'Image Alt Text',
+    message: 'Product images lack descriptive alt text. AI agents read alt text to understand what products look like.',
+    fix: 'Add descriptive alt text to every product image (e.g., "Navy blue merino wool running shoe, side view") instead of generic or empty values.',
+    impact: 12, effort: 'easy',
+  });
 
   const score = clamp(
-    details.descriptionCompleteness * 0.35 +
-    details.imageCoverage * 0.25 +
+    details.descriptionCompleteness * 0.30 +
+    details.imageCoverage * 0.20 +
+    details.imageAltQuality * 0.10 +
     details.variantClarity * 0.15 +
     details.priceTransparency * 0.15 +
     details.tagStructure * 0.10
@@ -146,6 +170,33 @@ export function analyzeTrustSignals(homepage, products) {
 }
 
 // ─── 3. Policy & FAQ Clarity (20%) ───
+
+function analyzePolicyClarity(text, type) {
+  if (!text) return { score: 0, signals: {} };
+  const t = text.toLowerCase();
+  if (type === 'shipping') {
+    const signals = {
+      hasTimeframe: /\d+\s*(day|business day|week|hour)/i.test(t),
+      hasCost: /(free|flat rate|\$\d+|shipping cost|no.*charge|complimentary)/i.test(t),
+      hasRegions: /(domestic|international|worldwide|united states|US|UK|canada|europe|global)/i.test(t),
+      hasTracking: /(track|tracking number|tracking info)/i.test(t),
+    };
+    const found = Object.values(signals).filter(Boolean).length;
+    return { score: clamp((found / 4) * 100), signals };
+  }
+  if (type === 'return') {
+    const signals = {
+      hasTimeframe: /\d+\s*(day|week|calendar|business)/i.test(t),
+      hasConditions: /(unworn|unused|original.*packaging|tags.*attached|unopened)/i.test(t),
+      hasFreeReturn: /(free return|free exchange|no.*cost|prepaid.*label)/i.test(t),
+      hasProcess: /(contact|email|request|initiate|RMA|return.*form)/i.test(t),
+    };
+    const found = Object.values(signals).filter(Boolean).length;
+    return { score: clamp((found / 4) * 100), signals };
+  }
+  return { score: text.length > 200 ? 80 : 40, signals: {} };
+}
+
 export function analyzePolicies(policies, faq) {
   const issues = [];
   const details = {};
@@ -155,8 +206,13 @@ export function analyzePolicies(policies, faq) {
   const privacy = policies['/policies/privacy-policy'];
   const terms = policies['/policies/terms-of-service'];
 
+  const shippingClarity = analyzePolicyClarity(shipping, 'shipping');
+  const returnClarity = analyzePolicyClarity(refund, 'return');
+
   details.returnPolicy = refund ? (refund.length > 200 ? 100 : 50) : 0;
+  details.returnClarity = refund ? returnClarity.score : 0;
   details.shippingPolicy = shipping ? (shipping.length > 200 ? 100 : 50) : 0;
+  details.shippingClarity = shipping ? shippingClarity.score : 0;
   details.privacyPolicy = privacy ? (privacy.length > 100 ? 100 : 50) : 0;
   details.termsOfService = terms ? (terms.length > 100 ? 100 : 50) : 0;
   details.faqCoverage = faq.exists ? (faq.content.length > 500 ? 100 : 60) : 0;
@@ -167,12 +223,36 @@ export function analyzePolicies(policies, faq) {
     fix: 'Create a clear return policy at Settings → Policies in Shopify. Include timeframes, conditions, and process.',
     impact: 25, effort: 'easy',
   });
+  else if (details.returnClarity < 50) {
+    const missing = [];
+    if (!returnClarity.signals.hasTimeframe) missing.push('return timeframe (e.g., "30 days")');
+    if (!returnClarity.signals.hasConditions) missing.push('return conditions (e.g., "unworn, with tags")');
+    if (!returnClarity.signals.hasProcess) missing.push('return process (e.g., "email us to initiate")');
+    issues.push({
+      severity: 'high', area: 'Return Policy Clarity',
+      message: `Your return policy exists but lacks key details. AI agents can't confidently tell shoppers about returns.`,
+      fix: `Add specific details: ${missing.join(', ')}. AI agents need concrete info to recommend purchases.`,
+      impact: 12, effort: 'easy',
+    });
+  }
   if (details.shippingPolicy === 0) issues.push({
     severity: 'critical', area: 'Shipping Policy',
     message: 'No shipping policy found. AI agents cannot tell customers about delivery expectations.',
     fix: 'Add a shipping policy specifying delivery times, costs, regions served, and tracking availability.',
     impact: 20, effort: 'easy',
   });
+  else if (details.shippingClarity < 50) {
+    const missing = [];
+    if (!shippingClarity.signals.hasTimeframe) missing.push('delivery timeframe (e.g., "5-7 business days")');
+    if (!shippingClarity.signals.hasCost) missing.push('shipping cost (e.g., "free over $50")');
+    if (!shippingClarity.signals.hasRegions) missing.push('regions served (e.g., "US and Canada")');
+    issues.push({
+      severity: 'high', area: 'Shipping Policy Clarity',
+      message: `Your shipping policy exists but is vague. AI agents can't give shoppers specific delivery expectations.`,
+      fix: `Add specific details: ${missing.join(', ')}. Shoppers asking ChatGPT "how long does shipping take?" need a real answer.`,
+      impact: 12, effort: 'easy',
+    });
+  }
   if (details.faqCoverage === 0) issues.push({
     severity: 'high', area: 'FAQ Page',
     message: 'No FAQ page found. FAQ content directly feeds AI agent answers to customer questions.',
@@ -181,8 +261,10 @@ export function analyzePolicies(policies, faq) {
   });
 
   const score = clamp(
-    details.returnPolicy * 0.25 +
-    details.shippingPolicy * 0.25 +
+    details.returnPolicy * 0.20 +
+    details.returnClarity * 0.05 +
+    details.shippingPolicy * 0.20 +
+    details.shippingClarity * 0.05 +
     details.faqCoverage * 0.25 +
     details.privacyPolicy * 0.10 +
     details.termsOfService * 0.15
@@ -332,13 +414,167 @@ export function analyzeAIReadiness(products) {
   return { score, details, issues };
 }
 
+// ─── Category Detection ───
+function detectStoreCategory(products) {
+  const cats = { apparel: 0, electronics: 0, beauty: 0, food: 0, home: 0, sports: 0, jewelry: 0 };
+  const patterns = {
+    apparel: /shirt|shoe|dress|jacket|pants|hoodie|sweater|sock|hat|cap|legging|bra|underwear|skirt|blouse|coat|sneaker|boot|sandal|tee|polo|denim|jeans|apparel|clothing|wear/i,
+    electronics: /phone|laptop|tablet|charger|cable|headphone|speaker|camera|battery|adapter|usb|bluetooth|wireless|smart.*watch|earbuds|monitor|keyboard|mouse/i,
+    beauty: /serum|cream|moisturizer|lipstick|mascara|foundation|concealer|skincare|shampoo|conditioner|perfume|fragrance|lotion|cleanser|toner|makeup|cosmetic|nail.*polish/i,
+    food: /coffee|tea|chocolate|snack|protein|supplement|vitamin|organic|spice|sauce|honey|oil|flour|candy|cookie|granola|matcha|collagen/i,
+    home: /candle|pillow|blanket|mug|bowl|plate|vase|lamp|rug|towel|curtain|frame|shelf|storage|decor|furniture/i,
+    sports: /yoga|gym|fitness|workout|running|cycling|hiking|swim|surf|ski|golf|tennis|exercise|athletic/i,
+    jewelry: /ring|necklace|bracelet|earring|pendant|chain|gold|silver|diamond|gemstone|watch|cuff|anklet/i,
+  };
+  products.forEach((p) => {
+    const text = `${p.title} ${p.product_type || ''} ${(p.tags || []).join(' ')}`.toLowerCase();
+    Object.keys(patterns).forEach((cat) => {
+      if (patterns[cat].test(text)) cats[cat]++;
+    });
+  });
+  const sorted = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+  if (sorted[0][1] === 0) return { primary: 'general', confidence: 0 };
+  const total = products.length;
+  return {
+    primary: sorted[0][0],
+    secondary: sorted[1]?.[1] > 0 ? sorted[1][0] : null,
+    confidence: Math.round((sorted[0][1] / total) * 100),
+  };
+}
+
+function getCategoryLabel(cat) {
+  const labels = {
+    apparel: 'Apparel & Fashion', electronics: 'Electronics & Tech', beauty: 'Beauty & Skincare',
+    food: 'Food & Beverages', home: 'Home & Living', sports: 'Sports & Fitness',
+    jewelry: 'Jewelry & Accessories', general: 'General Merchandise',
+  };
+  return labels[cat] || 'General Merchandise';
+}
+
+function getCategoryIssues(category, products, data) {
+  const issues = [];
+  const cat = category.primary;
+  if (cat === 'apparel') {
+    const hasSizing = data.faq.exists && /size|sizing|fit/i.test(data.faq.content);
+    if (!hasSizing) issues.push({
+      severity: 'high', area: 'Sizing Guide',
+      message: 'Clothing stores need sizing info. AI agents can\'t recommend apparel without size guidance.',
+      fix: 'Add a sizing guide page or include size charts in product descriptions. Mention fit (slim, regular, oversized) in each product.',
+      impact: 15, effort: 'medium',
+    });
+  }
+  if (cat === 'electronics') {
+    const hasSpecs = products.filter((p) => {
+      const d = (p.body_html || '').toLowerCase();
+      return /watt|volt|mah|ghz|ram|storage|resolution|battery/i.test(d);
+    }).length;
+    if (hasSpecs < products.length * 0.5) issues.push({
+      severity: 'high', area: 'Technical Specifications',
+      message: 'Electronics products need detailed specs. AI agents compare specs when recommending tech products.',
+      fix: 'Add structured specs: power, battery, dimensions, compatibility, warranty period. Use a consistent format across all products.',
+      impact: 18, effort: 'medium',
+    });
+  }
+  if (cat === 'beauty') {
+    const hasIngredients = products.filter((p) =>
+      /ingredient|contains|formulated with|key.*ingredient/i.test(p.body_html || '')
+    ).length;
+    if (hasIngredients < products.length * 0.3) issues.push({
+      severity: 'high', area: 'Ingredient Information',
+      message: 'Beauty products need ingredient lists. AI agents check for allergens and active ingredients when recommending.',
+      fix: 'Add ingredient lists and highlight key active ingredients. Mention if products are vegan, cruelty-free, or dermatologist-tested.',
+      impact: 15, effort: 'medium',
+    });
+  }
+  if (cat === 'food') {
+    const hasNutrition = products.filter((p) =>
+      /calorie|nutrition|serving|allergen|gluten|dairy|nut.*free/i.test(p.body_html || '')
+    ).length;
+    if (hasNutrition < products.length * 0.3) issues.push({
+      severity: 'high', area: 'Nutrition & Allergen Info',
+      message: 'Food products need nutrition and allergen information for AI agents to make safe recommendations.',
+      fix: 'Add nutritional info, ingredient lists, and allergen warnings. Mention dietary compatibility (vegan, gluten-free, etc.).',
+      impact: 15, effort: 'medium',
+    });
+  }
+  return issues;
+}
+
+// ─── JSON-LD Snippet Generation ───
+function generateSchemaFixes(data, issues) {
+  const storeName = data.homepage.meta?.title?.split(/[|\-–—]/)[0]?.trim() || 'Your Store';
+  const storeUrl = data.storeUrl;
+  const logoUrl = data.homepage.meta?.ogImage || `${storeUrl}/logo.png`;
+  const socialLinks = data.homepage.socialLinks || [];
+  const sample = data.products[0];
+
+  issues.forEach((issue) => {
+    if (issue.area === 'Organization Schema') {
+      issue.codeSnippet = {
+        language: 'json',
+        label: 'Organization JSON-LD — paste into theme.liquid before </head>',
+        code: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: storeName,
+          url: storeUrl,
+          logo: logoUrl,
+          ...(socialLinks.length > 0 ? { sameAs: socialLinks.slice(0, 5) } : {}),
+          contactPoint: { '@type': 'ContactPoint', contactType: 'customer service', url: `${storeUrl}/pages/contact` },
+        }, null, 2),
+      };
+    }
+    if (issue.area === 'Product Schema' && sample) {
+      issue.codeSnippet = {
+        language: 'json',
+        label: 'Product JSON-LD — add to product template',
+        code: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: sample.title || 'Product Name',
+          image: sample.images?.[0]?.src || `${storeUrl}/product-image.jpg`,
+          description: (sample.body_html || '').replace(/<[^>]*>/g, '').slice(0, 160) || 'Product description here',
+          brand: { '@type': 'Brand', name: storeName },
+          sku: sample.variants?.[0]?.sku || 'SKU-001',
+          offers: {
+            '@type': 'Offer',
+            price: sample.variants?.[0]?.price || '0.00',
+            priceCurrency: 'USD',
+            availability: 'https://schema.org/InStock',
+            url: `${storeUrl}/products/${sample.handle}`,
+          },
+        }, null, 2),
+      };
+    }
+    if (issue.area === 'Review Schema') {
+      issue.codeSnippet = {
+        language: 'json',
+        label: 'AggregateRating — add inside Product JSON-LD',
+        code: JSON.stringify({
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: '4.5',
+            reviewCount: '127',
+            bestRating: '5',
+            worstRating: '1',
+          },
+        }, null, 2),
+      };
+    }
+  });
+}
+
 // ─── Overall Analysis ───
 export function runFullAnalysis(data) {
-  const productQuality = analyzeProductQuality(data.products);
+  const productQuality = analyzeProductQuality(data.products, data.productPages);
   const trustSignals = analyzeTrustSignals(data.homepage, data.products);
   const policyClarity = analyzePolicies(data.policies, data.faq);
   const structuredData = analyzeStructuredData(data.homepage, data.productPages);
   const aiReadiness = analyzeAIReadiness(data.products);
+
+  // Detect store category
+  const category = detectStoreCategory(data.products);
+  const categoryIssues = getCategoryIssues(category, data.products, data);
 
   const overallScore = clamp(
     productQuality.score * 0.30 +
@@ -355,11 +591,15 @@ export function runFullAnalysis(data) {
     ...policyClarity.issues,
     ...structuredData.issues,
     ...aiReadiness.issues,
+    ...categoryIssues,
   ].sort((a, b) => {
     const sevOrder = { critical: 0, high: 1, medium: 2, low: 3 };
     if (sevOrder[a.severity] !== sevOrder[b.severity]) return sevOrder[a.severity] - sevOrder[b.severity];
     return (b.impact || 0) - (a.impact || 0);
   });
+
+  // Generate JSON-LD code snippets for structured data issues
+  generateSchemaFixes(data, allIssues);
 
   // Generate perception texts
   const perception = generatePerception(data, overallScore);
@@ -392,6 +632,11 @@ export function runFullAnalysis(data) {
     storeUrl: data.storeUrl,
     storeName: data.homepage.meta?.title?.split(/[|\-–—]/)[0]?.trim() || data.storeUrl,
     overallScore,
+    category: {
+      primary: getCategoryLabel(category.primary),
+      secondary: category.secondary ? getCategoryLabel(category.secondary) : null,
+      confidence: category.confidence,
+    },
     dimensions: {
       productQuality: { ...productQuality, label: 'Product Data Quality', weight: 30 },
       trustSignals: { ...trustSignals, label: 'Trust Signals', weight: 20 },
@@ -454,5 +699,60 @@ function generatePerception(data, score) {
     gaps.push('No social media presence reduces trust verification for AI agents');
   }
 
-  return { current, ideal, gaps };
+  // Generate Q&A scenarios
+  const qaScenarios = generateQAScenarios(data, { hasReturns, hasShipping, hasFaq, name, score });
+
+  return { current, ideal, gaps, qaScenarios };
+}
+
+function generateQAScenarios(data, ctx) {
+  const scenarios = [];
+  const products = data.products;
+  const sample = products[0];
+  const sampleDesc = sample ? (sample.body_html || '').replace(/<[^>]*>/g, '').trim() : '';
+  const samplePrice = sample?.variants?.[0]?.price;
+  const productType = sample?.product_type || 'products';
+
+  // Scenario 1: Product recommendation
+  if (sample) {
+    const priceInfo = samplePrice ? ` ($${samplePrice})` : '';
+    scenarios.push({
+      question: `What's a good ${productType || 'product'} from ${ctx.name}?`,
+      currentAnswer: sampleDesc.length > 150
+        ? `${ctx.name} sells ${sample.title}${priceInfo}. ${sampleDesc.slice(0, 120)}... However, I don't have enough detail to explain what makes this product special compared to alternatives.`
+        : `${ctx.name} has a product called "${sample.title}"${priceInfo}, but the description is very brief so I can't tell you much about its features, materials, or who it's best for.`,
+      idealAnswer: `${ctx.name}'s ${sample.title}${priceInfo} is one of their top products. It features detailed specifications, ${(sample.images || []).length}+ product images, and clear sizing/variant options. ${ctx.hasReturns ? 'They offer easy returns' : 'Returns policy available'}, making it a low-risk purchase. Customers can also find this product through Shopify's Agentic Storefronts in ChatGPT and Gemini.`,
+    });
+  }
+
+  // Scenario 2: Return policy question
+  scenarios.push({
+    question: `Does ${ctx.name} offer free returns?`,
+    currentAnswer: ctx.hasReturns
+      ? `${ctx.name} has a return policy, but I can't determine the specific timeframes, conditions, or whether returns are free. You'll need to check their website directly.`
+      : `I couldn't find a clear return policy for ${ctx.name}. I'd recommend caution when purchasing, as I can't guarantee you'll be able to return items if they don't meet your expectations.`,
+    idealAnswer: `Yes! ${ctx.name} has a transparent return policy clearly stated on their store. The policy details timeframes, conditions, and the return process — making it easy for shoppers to buy with confidence. This information is structured for AI agents to surface automatically.`,
+  });
+
+  // Scenario 3: Product comparison
+  if (products.length >= 2) {
+    const p1 = products[0];
+    const p2 = products[1];
+    scenarios.push({
+      question: `Compare "${p1.title}" vs "${p2.title}"`,
+      currentAnswer: `Both products are from ${ctx.name}. "${p1.title}" is priced at $${p1.variants?.[0]?.price || '?'} and "${p2.title}" at $${p2.variants?.[0]?.price || '?'}. Unfortunately, the product descriptions don't include enough specifications (dimensions, materials, use cases) for me to make a meaningful comparison.`,
+      idealAnswer: `Great question! "${p1.title}" ($${p1.variants?.[0]?.price || 'N/A'}) is designed for [specific use case] with [key specs], while "${p2.title}" ($${p2.variants?.[0]?.price || 'N/A'}) is better suited for [different use case]. Both have detailed specifications, multiple images, and verified reviews to help you decide. ${ctx.name} offers easy returns on both.`,
+    });
+  }
+
+  // Scenario 4: Trust question
+  scenarios.push({
+    question: `Is ${ctx.name} a trustworthy store for online shopping?`,
+    currentAnswer: ctx.score >= 60
+      ? `${ctx.name} appears to be a legitimate Shopify store with ${products.length} products. ${ctx.hasReturns && ctx.hasShipping ? 'They have return and shipping policies.' : 'However, some trust signals like clear policies or reviews are missing.'} I'd recommend verifying independently before making a large purchase.`
+      : `I have limited information about ${ctx.name}. ${!ctx.hasReturns ? 'No return policy was found.' : ''} ${!ctx.hasShipping ? 'Shipping details are unclear.' : ''} ${(data.homepage.socialLinks || []).length === 0 ? 'No social media presence was detected.' : ''} I'd suggest researching further before purchasing.`,
+    idealAnswer: `${ctx.name} is a verified Shopify merchant with ${products.length} products, transparent return and shipping policies, active social media presence, and structured data that passes Google's rich results validation. Their store is optimized for Shopify's Agentic Storefronts, meaning product data is syndicated to ChatGPT, Gemini, and Perplexity with full trust signals.`,
+  });
+
+  return scenarios;
 }
