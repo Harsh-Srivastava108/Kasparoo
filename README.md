@@ -4,7 +4,7 @@
 
 A merchant-facing diagnostic tool that shows Shopify store owners how AI shopping agents (ChatGPT, Gemini, Perplexity, CoPilot) perceive and represent their products — and what they should improve to maximize visibility in Shopify's Agentic Storefronts ecosystem.
 
-## 🎯 What It Does
+## What It Does
 
 Paste any Shopify store URL and get an instant, comprehensive AI readiness audit:
 
@@ -16,7 +16,7 @@ Paste any Shopify store URL and get an instant, comprehensive AI readiness audit
 6. **Per-Product Breakdown** — Data quality scores for every product in the catalog
 7. **Report Exporting** — One-click PDF export to share insights with your team
 
-## 🧠 Product Thinking
+## Product Thinking
 
 ### The Problem
 
@@ -37,12 +37,12 @@ We deliberately chose to scan **publicly available** Shopify data (`products.jso
 | **Setup** | Install app, configure API keys | Paste a URL |
 | **Scope** | Only stores you own | Any live Shopify store |
 | **Perspective** | What's in the backend | **What AI agents actually see** |
-| **Competitive analysis** | ❌ | ✅ Scan competitor stores |
+| **Competitive analysis** | No | Yes (Scan competitor stores) |
 | **Time to value** | Minutes to set up | Instant |
 
 **Key insight:** AI shopping agents don't have Admin API access. They see public data — the same data we scan. This makes our tool's perspective more authentic than an Admin API app.
 
-## 🏗 Architecture
+## Architecture
 
 ```
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
@@ -76,7 +76,7 @@ We deliberately chose to scan **publicly available** Shopify data (`products.jso
 | Structured Data | 20% | JSON-LD schema (Product, Organization, BreadcrumbList) |
 | AI Conversational Readiness | 10% | Description comparability, Q&A-readiness, specification depth |
 
-## 🚀 Getting Started
+## Getting Started
 
 ```bash
 # Clone the repository
@@ -97,7 +97,7 @@ Open [http://localhost:3000](http://localhost:3000) and paste any Shopify store 
 - `allbirds.com` — Score: ~53 (Good product data, weak policies)
 - `gymshark.com` — Score: ~40 (Large catalog, structured data gaps)
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/
@@ -121,7 +121,7 @@ src/
     └── analyzer.js           # 5-dimension scoring engine
 ```
 
-## 🔑 Key Features
+## Key Features
 
 ### AI Shopping Simulator
 Instead of generic "current vs. ideal" text, we simulate real conversations:
@@ -146,6 +146,6 @@ We translate scores into merchant-friendly language:
 - Works on any public Shopify store
 - **PDF Report Export:** Download and share the comprehensive audit with stakeholders
 
-## 📄 License
+## License
 
 Built for the Kasparoo Internship Challenge — Track 5: AI Representation Optimizer.
